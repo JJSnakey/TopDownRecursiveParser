@@ -17,14 +17,15 @@ std::vector<std::string> scopeSt;
 int layer;
 std::string vis = "public";
 std::vector<Variable> vars;
-std::vector<std::string> potentiallyUnecessaryErrorOutputFixing;
+std::vector<std::string> potentiallyUnecessaryErrorOutputFixing;        //totally worked and patched my error test cases btw
 
 //-------------------------------------------Constructors---------------------------------------
 
-Variable::Variable(Token T, std::string vis, std::string scopeInstance){
+Variable::Variable(Token T, std::string vis, std::string scopeInstance, int layer){
     this->ID = T.lexeme;
     this->scopeString = scopeInstance;
     this->visibility = vis;
+    this->layer = layer;
 }
 
 //------------------------------------Method implementations-----------------------------------
@@ -40,10 +41,15 @@ std::string varPrint(Variable var){
     return temp;
 }
 
-int varCheck(std::string lexeme){           //checks if a variable with name lexeme already exists in symbol table
-    for(int i = 0; i < vars.size(); i++){
+int varCheck(std::string lexeme, int layer){           //checks if a variable with name lexeme already exists in symbol table
+    for(int i = vars.size() -1; i >= 0; i--){
         if(lexeme == vars[i].ID){
-            return i;
+            if(vars[i].visibility == "private" && layer > vars[i].layer){
+                continue;
+            }
+            else{
+                return i;
+            }
         }
     }
     return -1;
@@ -107,27 +113,20 @@ void Parser::parse_var_list(){              //ID | ID COMMA var_list
     Token T = lexer.GetToken();
     if(T.token_type == ID){
 
-        int flag = varCheck(T.lexeme);     //check if variable already exists with this ID
-
-        if(flag == -1){
-            Variable temp(T, vis, scopeSt[layer]);      //uses constructor, takes T.lexeme, and vis
-            vars.push_back(temp);
-        }
-        else{           //activates if we already have a variable with this name, update scope
-            vars[flag].scopeString = scopeSt[scopeSt.size()-1];
-        }
+        Variable temp(T, vis, scopeSt[layer], layer);      //uses constructor, takes T.lexeme, and vis
+        vars.push_back(temp);
 
         T = lexer.GetToken();
-        if(T.token_type == COMMA){
-            parse_var_list();
-        }
-        else if(T.token_type == SEMICOLON){
-            lexer.UngetToken(T);
-        }
-        else{
-            //std::cout<< "point K ";
-            syntax_error();
-        }
+            if(T.token_type == COMMA){
+                parse_var_list();
+            }
+            else if(T.token_type == SEMICOLON){
+                lexer.UngetToken(T);
+            }
+            else{
+                //std::cout<< "point K ";
+                syntax_error();
+            }
     }
     else{
         //std::cout<< "point B ";
@@ -152,15 +151,15 @@ void Parser::parse_scope(){                 // ID LBRACE public_vars private_var
             parse_stmt_list();
     
             T = lexer.GetToken();
-            if(T.token_type == RBRACE){
-                //std::cout << "works great m8 -- end scope\n";
-                scopeSt.pop_back();
-                layer -= 1;
-            }
-            else{
-                //std::cout<< "point C ";
-                syntax_error();
-            }
+                if(T.token_type == RBRACE){
+                    //std::cout << "works great m8 -- end scope\n";
+                    scopeSt.pop_back();
+                    layer -= 1;
+                }
+                else{
+                    //std::cout<< "point C ";
+                    syntax_error();
+                }
  
         }
  
@@ -252,7 +251,7 @@ void Parser::parse_stmt(){                  // ID EQUAL ID SEMICOLON | scope
     Token T = lexer.GetToken();
 
     if(T.token_type == ID){
-        int flag = varCheck(T.lexeme);      //check to see if ID exists in variables
+        int flag = varCheck(T.lexeme, layer);      //check to see if ID exists in variables
         int hold = -2;
         std::string holdID;
         if(flag != -1){
@@ -275,7 +274,7 @@ void Parser::parse_stmt(){                  // ID EQUAL ID SEMICOLON | scope
 
             if(T.token_type == ID){
 
-                flag = varCheck(T.lexeme);              //check to see if ID exists in variables
+                flag = varCheck(T.lexeme, layer);              //check to see if ID exists in variables
                 int hold2 = -2;
                 std::string holdID2;
                     if(flag != -1){
@@ -322,5 +321,20 @@ void Parser::parse_stmt(){                  // ID EQUAL ID SEMICOLON | scope
 /*-------------------------------------comment bunker------------------------------------------
 
 lots of comments above were used for debugging
+
+having problems with privates
+varcheck compares string to each variable in vector to see if it already exists
+if it exists it updates the scope// probably an incorrect thing to do
+
+possible - need to just create more variables in vector, then reverse varcheck to start at end and work towards global
+skipping privates if they are lower layer
+
+flipping varcheck seg faults
+jk, I accessed index at .size() instead of .size()-1
+
+removed var check before creating new variable, so now there are lots of variables and some with same names different scopes
+need to update statement print updating
+
+we changed our errors, yet fixed some
 
 */
