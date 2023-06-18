@@ -5,6 +5,9 @@
 
 #include "lexer.h"
 #include "inputbuf.h"
+#include <iostream>
+#include <istream>
+#include <string>
 
 
 class Parser{
@@ -22,6 +25,18 @@ class Parser{
     
         LexicalAnalyzer lexer;
 };
+
+class Variable{
+
+    public:
+    std::string ID;
+    std::string scopeString;
+    std::string visibility;
+
+    Variable(Token T, std::string vis, std::string scopeInstance);
+};
+
+
 
 
 #endif  //__PARSER__H__

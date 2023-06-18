@@ -5,11 +5,48 @@
 #include <vector>
 #include <string>
 #include <cctype>
+#include <stack>
 
 #include "parser.h"
 #include "lexer.h"
 #include "inputbuf.h"
 
+//-------------------------------------------Global Vars------------------------------------------
+
+std::vector<std::string> scopeSt;
+int layer;
+std::string vis = "public";
+std::vector<Variable> vars;
+
+//-------------------------------------------Constructors---------------------------------------
+
+Variable::Variable(Token T, std::string vis, std::string scopeInstance){
+    this->ID = T.lexeme;
+    this->scopeString = scopeInstance;
+    this->visibility = vis;
+}
+
+//------------------------------------Method implementations-----------------------------------
+
+void varPrint(Variable var){
+    if(var.scopeString != "::"){
+        std::cout << var.scopeString << '.' << var.ID;
+    }
+    else{
+        std::cout << var.scopeString << var.ID;
+    }
+}
+
+int varCheck(std::string lexeme){           //checks if a variable with name lexeme already exists in symbol table
+    for(int i = 0; i < vars.size(); i++){
+        if(lexeme == vars[i].ID){
+            return i;
+        }
+    }
+    return -1;
+}
+
+//-------------------------------------------parsing logic below-----------------------------------
 
 void Parser::syntax_error(){
     std::cout << "Syntax Error\n";
@@ -25,7 +62,9 @@ void Parser::parse_program(){               //global_vars scope
 
 void Parser::parse_global_vars(){           //epsilon | var_list SEMICOLON
     //std::cout<< "glob vars\n";
-    
+    scopeSt.push_back("::");        //global scope
+    int layer = 0;
+
     Token T = lexer.GetToken();
     
     if(T.token_type == ID){
@@ -61,6 +100,16 @@ void Parser::parse_var_list(){              //ID | ID COMMA var_list
     Token T = lexer.GetToken();
     if(T.token_type == ID){
 
+        int flag = varCheck(T.lexeme);     //check if variable already exists with this ID
+
+        if(flag == -1){
+            Variable temp(T, vis, scopeSt[layer]);      //uses constructor, takes T.lexeme, and vis
+            vars.push_back(temp);
+        }
+        else{           //activates if we already have a variable with this name, update scope
+            vars[flag].scopeString = scopeSt[scopeSt.size()-1];
+        }
+
         T = lexer.GetToken();
         if(T.token_type == COMMA){
             parse_var_list();
@@ -84,9 +133,13 @@ void Parser::parse_scope(){                 // ID LBRACE public_vars private_var
     Token T = lexer.GetToken();
     
     if(T.token_type == ID){
+        std::string scopeName = T.lexeme;       //hold the name for a sec
         T = lexer.GetToken();
     
         if(T.token_type == LBRACE){
+            scopeSt.push_back(scopeName);       //add a scopecop
+            layer +=1;
+
             parse_public_vars();
             parse_private_vars();
             parse_stmt_list();
@@ -94,6 +147,8 @@ void Parser::parse_scope(){                 // ID LBRACE public_vars private_var
             T = lexer.GetToken();
             if(T.token_type == RBRACE){
                 //std::cout << "works great m8 -- end scope\n";
+                scopeSt.pop_back();
+                layer -= 1;
             }
             else{
                 //std::cout<< "point C ";
@@ -116,7 +171,7 @@ void Parser::parse_public_vars(){           // epsilon | PUBLIC COLON var_list S
         
         T = lexer.GetToken();
         if(T.token_type == COLON){
-            
+            vis = "public";
             parse_var_list();
 
             T = lexer.GetToken();
@@ -146,6 +201,7 @@ void Parser::parse_private_vars(){          // epsilon | PRIVATE COLON var_list 
         
         T = lexer.GetToken();
         if(T.token_type == COLON){
+            vis = "private";
             parse_var_list();
 
             T = lexer.GetToken();
@@ -189,6 +245,15 @@ void Parser::parse_stmt(){                  // ID EQUAL ID SEMICOLON | scope
     Token T = lexer.GetToken();
 
     if(T.token_type == ID){
+        int flag = varCheck(T.lexeme);      //check to see if ID exists in variables
+        int hold = -2;
+        std::string holdID;
+        if(flag != -1){
+            hold = flag;                //if it does, return index to where
+        }
+        else{
+            holdID = T.lexeme;          //else hold the ID name for unresolved
+        }
 
         Token T2 = lexer.GetToken();
         if(T2.token_type == LBRACE){
@@ -203,10 +268,34 @@ void Parser::parse_stmt(){                  // ID EQUAL ID SEMICOLON | scope
 
             if(T.token_type == ID){
 
-                T = lexer.GetToken();
+                flag = varCheck(T.lexeme);              //check to see if ID exists in variables
+                int hold2 = -2;
+                std::string holdID2;
+                    if(flag != -1){
+                        hold2 = flag;               //if it does, return index to where
+                    }
+                    else{
+                        holdID2 = T.lexeme;         //else hold the ID name for unresolved
+                    }
 
+                T = lexer.GetToken();
                 if(T.token_type == SEMICOLON){
                     //std::cout << "works great m8 -- end of the statement\n";
+
+                    if(hold != -2){
+                        varPrint(vars[hold]);   //if we found the index, print it
+                    }
+                    else{
+                        std::cout << "?." << holdID;    //if we didnt, print the name with unresolved scope
+                    }
+                    std::cout << " = ";
+                    if(hold2 != -2){
+                        varPrint(vars[hold]);   //if we found the index, print it
+                    }
+                    else{
+                        std::cout << "?." << holdID2;    //if we didnt, print the name with unresolved scope
+                    }
+                    std::cout << std::endl;
                 }
                 else{
                     //std::cout<< "point I ";
@@ -222,8 +311,8 @@ void Parser::parse_stmt(){                  // ID EQUAL ID SEMICOLON | scope
     }
 }
 
-/*
-comment bunker
+
+/*-------------------------------------comment bunker------------------------------------------
 
 lots of comments above were used for debugging
 
