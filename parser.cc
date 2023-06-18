@@ -296,7 +296,7 @@ void Parser::parse_stmt(){                  // ID EQUAL ID SEMICOLON | scope
                     }
                     temporary = temporary + " = ";
                     if(hold2 != -2){
-                        temporary = temporary + varPrint(vars[hold]);   //if we found the index, print it
+                        temporary = temporary + varPrint(vars[hold2]);   //if we found the index, print it
                     }
                     else{
                         temporary = temporary + "?." + holdID2;    //if we didnt, print the name with unresolved scope
