@@ -17,6 +17,7 @@ std::vector<std::string> scopeSt;
 int layer;
 std::string vis = "public";
 std::vector<Variable> vars;
+std::vector<std::string> potentiallyUnecessaryErrorOutputFixing;
 
 //-------------------------------------------Constructors---------------------------------------
 
@@ -28,13 +29,15 @@ Variable::Variable(Token T, std::string vis, std::string scopeInstance){
 
 //------------------------------------Method implementations-----------------------------------
 
-void varPrint(Variable var){
+std::string varPrint(Variable var){
+    std::string temp;
     if(var.scopeString != "::"){
-        std::cout << var.scopeString << '.' << var.ID;
+        temp = var.scopeString + '.' +var.ID;
     }
     else{
-        std::cout << var.scopeString << var.ID;
+        temp = var.scopeString + var.ID;
     }
+    return temp;
 }
 
 int varCheck(std::string lexeme){           //checks if a variable with name lexeme already exists in symbol table
@@ -58,6 +61,10 @@ void Parser::parse_program(){               //global_vars scope
     
     parse_global_vars();
     parse_scope();
+
+    for(int i = 0; i < potentiallyUnecessaryErrorOutputFixing.size(); i++){
+        std::cout << potentiallyUnecessaryErrorOutputFixing[i] << std::endl;
+    }
 }
 
 void Parser::parse_global_vars(){           //epsilon | var_list SEMICOLON
@@ -281,21 +288,21 @@ void Parser::parse_stmt(){                  // ID EQUAL ID SEMICOLON | scope
                 T = lexer.GetToken();
                 if(T.token_type == SEMICOLON){
                     //std::cout << "works great m8 -- end of the statement\n";
-
+                    std::string temporary = "";
                     if(hold != -2){
-                        varPrint(vars[hold]);   //if we found the index, print it
+                        temporary = temporary + varPrint(vars[hold]);   //if we found the index, print it
                     }
                     else{
-                        std::cout << "?." << holdID;    //if we didnt, print the name with unresolved scope
+                        temporary = temporary +  "?." + holdID;    //if we didnt, print the name with unresolved scope
                     }
-                    std::cout << " = ";
+                    temporary = temporary + " = ";
                     if(hold2 != -2){
-                        varPrint(vars[hold]);   //if we found the index, print it
+                        temporary = temporary + varPrint(vars[hold]);   //if we found the index, print it
                     }
                     else{
-                        std::cout << "?." << holdID2;    //if we didnt, print the name with unresolved scope
+                        temporary = temporary + "?." + holdID2;    //if we didnt, print the name with unresolved scope
                     }
-                    std::cout << std::endl;
+                    potentiallyUnecessaryErrorOutputFixing.push_back(temporary);
                 }
                 else{
                     //std::cout<< "point I ";
