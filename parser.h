@@ -32,8 +32,9 @@ class Variable{
     std::string ID;
     std::string scopeString;
     std::string visibility;
+    int layer;
 
-    Variable(Token T, std::string vis, std::string scopeInstance);
+    Variable(Token T, std::string vis, std::string scopeInstance, int layer);
 };
 
 
