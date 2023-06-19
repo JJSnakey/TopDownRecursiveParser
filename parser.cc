@@ -55,6 +55,14 @@ int varCheck(std::string lexeme, int layer){           //checks if a variable wi
     return -1;
 }
 
+void symbolReaper(int deadLayer){           //called after scope ends, removes out of scope variables from table
+    for(int i = vars.size()-1; i >= 0; i--){
+        if(vars[i].layer == deadLayer){
+            vars.pop_back();
+        }
+    }
+}
+
 //-------------------------------------------parsing logic below-----------------------------------
 
 void Parser::syntax_error(){
@@ -154,7 +162,12 @@ void Parser::parse_scope(){                 // ID LBRACE public_vars private_var
                 if(T.token_type == RBRACE){
                     //std::cout << "works great m8 -- end scope\n";
                     scopeSt.pop_back();
+                    symbolReaper(layer);
                     layer -= 1;
+                }
+                else if(T.token_type == ID){
+                    lexer.UngetToken(T);
+                    parse_stmt_list();
                 }
                 else{
                     //std::cout<< "point C ";
