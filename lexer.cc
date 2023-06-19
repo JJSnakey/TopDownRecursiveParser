@@ -155,8 +155,12 @@ Token LexicalAnalyzer::GetToken()
         case '/':                           //if /
             input.GetChar(c);               // check for other /
             if(c == '/'){                   // if // then its a comment
-                while(c != '\n'){           // cycle letters till new line
+                while(c != '\n'){           // cycle letters till new line or end of input
                     input.GetChar(c);
+                    if(input.EndOfInput()){
+                        tmp.token_type = END_OF_FILE;
+                        return tmp;
+                    }
                 }
                 return LexicalAnalyzer::GetToken();     //call the funct
             }

@@ -175,7 +175,6 @@ void Parser::parse_scope(){                 // ID LBRACE public_vars private_var
                 }
                 else{
                     //std::cout<< "point C \n";
-                    //printinTime();
                     syntax_error();
                 }
  
@@ -253,14 +252,15 @@ void Parser::parse_stmt_list(){             // stmt | stmt stmt_list
     parse_stmt();
     Token T = lexer.GetToken();
 
-    if(T.token_type == RBRACE){
-        lexer.UngetToken(T);
-        //std::cout << "works great m8 -- end statement list\n";
-    }
-    else{
-        lexer.UngetToken(T);
-        parse_stmt();
-    }
+        if(T.token_type == RBRACE){
+            lexer.UngetToken(T);
+            //std::cout << "works great m8 -- end statement list\n";
+        }
+        else{
+            lexer.UngetToken(T);
+            parse_stmt();
+        }
+        
 }
 
 void Parser::parse_stmt(){                  // ID EQUAL ID SEMICOLON | scope
@@ -272,65 +272,65 @@ void Parser::parse_stmt(){                  // ID EQUAL ID SEMICOLON | scope
         int flag = varCheck(T.lexeme, layer);      //check to see if ID exists in variables
         int hold = -2;
         std::string holdID;
-        if(flag != -1){
-            hold = flag;                //if it does, return index to where
-        }
-        else{
-            holdID = T.lexeme;          //else hold the ID name for unresolved
-        }
+            if(flag != -1){
+                hold = flag;                //if it does, return index to where
+            }
+            else{
+                holdID = T.lexeme;          //else hold the ID name for unresolved
+            }
 
         Token T2 = lexer.GetToken();
-        if(T2.token_type == LBRACE){
+            if(T2.token_type == LBRACE){
 
-            lexer.UngetToken(T2);
-            lexer.UngetToken(T);
-            parse_scope();
-        }
-        else if(T2.token_type == EQUAL){
-
-            T = lexer.GetToken();
-
-            if(T.token_type == ID){
-
-                flag = varCheck(T.lexeme, layer);              //check to see if ID exists in variables
-                int hold2 = -2;
-                std::string holdID2;
-                    if(flag != -1){
-                        hold2 = flag;               //if it does, return index to where
-                    }
-                    else{
-                        holdID2 = T.lexeme;         //else hold the ID name for unresolved
-                    }
+                lexer.UngetToken(T2);
+                lexer.UngetToken(T);
+                parse_scope();
+            }
+            else if(T2.token_type == EQUAL){
 
                 T = lexer.GetToken();
-                if(T.token_type == SEMICOLON){
-                    //std::cout << "works great m8 -- end of the statement\n";
-                    std::string temporary = "";
-                    if(hold != -2){
-                        temporary = temporary + varPrint(vars[hold]);   //if we found the index, print it
+
+                if(T.token_type == ID){
+
+                    flag = varCheck(T.lexeme, layer);              //check to see if ID exists in variables
+                    int hold2 = -2;
+                    std::string holdID2;
+                        if(flag != -1){
+                            hold2 = flag;               //if it does, return index to where
+                        }
+                        else{
+                            holdID2 = T.lexeme;         //else hold the ID name for unresolved
+                        }
+
+                    T = lexer.GetToken();
+                    if(T.token_type == SEMICOLON){
+                        //std::cout << "works great m8 -- end of the statement\n";
+                        std::string temporary = "";
+                        if(hold != -2){
+                            temporary = temporary + varPrint(vars[hold]);   //if we found the index, print it
+                        }
+                        else{
+                            temporary = temporary +  "?." + holdID;    //if we didnt, print the name with unresolved scope
+                        }
+                        temporary = temporary + " = ";
+                        if(hold2 != -2){
+                            temporary = temporary + varPrint(vars[hold2]);   //if we found the index, print it
+                        }
+                        else{
+                            temporary = temporary + "?." + holdID2;    //if we didnt, print the name with unresolved scope
+                        }
+                        potentiallyUnecessaryErrorOutputFixing.push_back(temporary);
                     }
                     else{
-                        temporary = temporary +  "?." + holdID;    //if we didnt, print the name with unresolved scope
+                        //std::cout<< "point I ";
+                        syntax_error();
                     }
-                    temporary = temporary + " = ";
-                    if(hold2 != -2){
-                        temporary = temporary + varPrint(vars[hold2]);   //if we found the index, print it
-                    }
-                    else{
-                        temporary = temporary + "?." + holdID2;    //if we didnt, print the name with unresolved scope
-                    }
-                    potentiallyUnecessaryErrorOutputFixing.push_back(temporary);
                 }
                 else{
-                    //std::cout<< "point I ";
+                    //std::cout<< "point J \n";
                     syntax_error();
                 }
             }
-            else{
-                //std::cout<< "point J ";
-                syntax_error();
-            }
-        }
         
     }
 }
@@ -356,4 +356,6 @@ need to update statement print updating
 we changed our errors, yet fixed some
 
 fixed removing out of scope elements from symbol table
+
+issues resolving other scopes after a scope resolves and is followed by a statement
 */
