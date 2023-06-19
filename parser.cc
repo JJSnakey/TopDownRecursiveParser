@@ -63,6 +63,12 @@ void symbolReaper(int deadLayer){           //called after scope ends, removes o
     }
 }
 
+void printinTime(){
+    for(int i = 0; i < potentiallyUnecessaryErrorOutputFixing.size(); i++){
+        std::cout << potentiallyUnecessaryErrorOutputFixing[i] << std::endl;
+    }
+}
+
 //-------------------------------------------parsing logic below-----------------------------------
 
 void Parser::syntax_error(){
@@ -76,9 +82,7 @@ void Parser::parse_program(){               //global_vars scope
     parse_global_vars();
     parse_scope();
 
-    for(int i = 0; i < potentiallyUnecessaryErrorOutputFixing.size(); i++){
-        std::cout << potentiallyUnecessaryErrorOutputFixing[i] << std::endl;
-    }
+    printinTime();
 }
 
 void Parser::parse_global_vars(){           //epsilon | var_list SEMICOLON
@@ -170,7 +174,8 @@ void Parser::parse_scope(){                 // ID LBRACE public_vars private_var
                     parse_stmt_list();
                 }
                 else{
-                    //std::cout<< "point C ";
+                    //std::cout<< "point C \n";
+                    //printinTime();
                     syntax_error();
                 }
  
@@ -243,7 +248,7 @@ void Parser::parse_private_vars(){          // epsilon | PRIVATE COLON var_list 
 }
 
 void Parser::parse_stmt_list(){             // stmt | stmt stmt_list
-    //std::cout<< "state list \n";
+    //std::cout<< "state list -------------------------------------------------------------\n";
 
     parse_stmt();
     Token T = lexer.GetToken();
@@ -350,4 +355,5 @@ need to update statement print updating
 
 we changed our errors, yet fixed some
 
+fixed removing out of scope elements from symbol table
 */
